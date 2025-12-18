@@ -143,3 +143,26 @@ elif choice == "View Students":
         st.dataframe(student_data, use_container_width=True)
     else:
         st.info("No students found in database.")
+
+# === VIEW TEACHERS ===
+elif choice == "View Teachers":
+    st.header("👩‍🏫 All Teachers")
+    
+    teachers = school.get_all_teachers()
+    
+    if teachers:
+        teacher_data = []
+        for t in teachers:
+            teacher_data.append({
+                "Name": getattr(t, "name", "Unknown"),
+                "ID": getattr(t, "employee_id", "Unknown"),
+                "Phone": getattr(t, "phone_number", "Unknown"),
+                "Subjects": getattr(t, "subjects", ""),
+                
+                # FIX: Ensure we look for 'classes' (from your DB code)
+                "Classes": getattr(t, "classes", getattr(t, "classes_assigned", "N/A"))
+            })
+            
+        st.dataframe(teacher_data, use_container_width=True)
+    else:
+        st.info("No teachers found in database.")

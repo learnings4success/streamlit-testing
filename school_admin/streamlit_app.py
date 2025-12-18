@@ -14,7 +14,7 @@ from db_connection import SchoolDB
 @st.cache_resource
 def get_school_system():
     # This connects to your existing SQLite database
-    schooldb = SchoolDB("school_database.db")
+    schooldb = SchoolDB("school_database_1.db")
     school = School(schooldb)
     return school
 

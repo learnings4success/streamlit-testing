@@ -123,24 +123,20 @@ elif choice == "Delete Teacher":
 elif choice == "View Students":
     st.header("👨‍🎓 All Students")
     
-    # Get list from your backend
     students = school.get_all_students()
     
     if students:
-        # Convert objects to a format Streamlit can display nicely
-        # Assuming your Student object has a __dict__ or we can extract fields
         student_data = []
         for s in students:
-            # We map the object attributes to a dictionary for the table
+            # FIX: Access using ['key'] because 's' is a Dictionary
             student_data.append({
-                "Name": s.name,
-                "Roll No": s.roll_no,
-                "Class": s.class_, # Assuming attribute is named class_
-                "Phone": s.phone_number,
-                "Subjects": s.subjects
+                "Name": s['name'],
+                "Roll No": s['roll_no'],
+                "Class": s['class_'], 
+                "Phone": s['phone_number'],
+                "Subjects": s['subjects']
             })
         
-        # Display as a pretty interactive table
         st.dataframe(student_data, use_container_width=True)
     else:
         st.info("No students found in database.")
@@ -154,12 +150,13 @@ elif choice == "View Teachers":
     if teachers:
         teacher_data = []
         for t in teachers:
+            # FIX: Access using ['key'] and use the correct key name 'classes'
             teacher_data.append({
-                "Name": t.name,
-                "ID": t.employee_id,
-                "Phone": t.phone_number,
-                "Subjects": t.subjects,
-                "Classes": t.classes_assigned # Assuming attribute name
+                "Name": t['name'],
+                "ID": t['employee_id'],
+                "Phone": t['phone_number'],
+                "Subjects": t['subjects'],
+                "Classes": t['classes']  # Fixed: changed from t.classes_assigned
             })
             
         st.dataframe(teacher_data, use_container_width=True)

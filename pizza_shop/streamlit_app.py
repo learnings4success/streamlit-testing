@@ -1,118 +1,75 @@
 import streamlit as st
 import random
-import streamlit.components.v1 as components # Import this for the print button
 
-# Import your math logic
+# IMPORTING your custom functions
+# This works exactly like the CLI version!
 from tax_calculator import calculate_discount, calculate_gst
 
-st.set_page_config(page_title="Pizza Receipt", page_icon="🍕")
-
+# Title and Greeting
 st.title("🍕 Punjabi Pizza Hut")
-st.write("Welcome! Order your fresh pizza below.")
+st.write("Hello Sir/Madam! Welcome to the best Pizza in town.")
 
 # --- INPUTS ---
 col1, col2 = st.columns(2)
 
 with col1:
-    name = st.text_input("Customer Name:")
+    name = st.text_input("What is your name:")
 
 with col2:
-    menu = ["Margherita", "Vegi Pizza", "Farmhouse", "Paneer Tikka"]
-    pizza = st.selectbox("Choose Pizza:", menu)
+    # Instead of printing options one by one, we make a Dropdown list
+    menu = [
+        "Margherita",
+        "Vegi Pizza",
+        "Farmhouse",
+        "Paneer Tikka"
+    ]
+    pizza = st.selectbox("What would you like to order:", menu)
 
-# --- CALCULATE BUTTON ---
-if st.button("Generate Bill 🧾"):
+# --- ACTION ---
+# We use a button to trigger the calculation (The Order)
+if st.button("Calculate Bill 🧾"):
     
     if name == "":
-        st.error("Please enter a name first!")
+        st.error("Please enter your name first!")
     else:
-        # 1. LOGIC
+        # --- LOGIC (From your Python Script) ---
+        # 1. Generate Random Price & Discount
         pizza_price = random.randint(150, 500)
         pizza_discount = random.randint(15, 20)
 
+        # 2. Calculate using the imported functions
         discount_amount = calculate_discount(pizza_price, pizza_discount)
-        final_without_tax = pizza_price - discount_amount
-        final_with_tax = calculate_gst(final_without_tax)
-        gst_amount = final_with_tax - final_without_tax
+        
+        final_price_without_tax = pizza_price - discount_amount
+        final_price_with_tax = calculate_gst(final_price_without_tax)
+        
+        gst_amount = final_price_with_tax - final_price_without_tax
 
-        # 2. DISPLAY RECEIPT (This part will be printed)
-        st.divider()
-        st.subheader("🧾 Tax Invoice")
-        st.write(f"**Customer:** {name}")
-        st.write(f"**Item:** {pizza}")
+        # --- OUTPUT (The Receipt) ---
+        st.balloons() # Fun animation!
         
-        # Bill Table
-        c1, c2 = st.columns([3, 1])
+        st.divider() # This replaces print("-" * 50)
         
+        st.subheader(f"Order for: {name}")
+        st.success(f"You selected: **{pizza}**")
+
+        st.markdown("### 📝 Final Bill Details")
+
+        # Using columns to make the bill look neat
+        c1, c2 = st.columns([2, 1]) # Column 1 is wider (Text), Column 2 is narrower (Price)
+
         with c1:
-            st.write("Base Price")
-            st.write(f"Discount ({pizza_discount}%)")
-            st.write("GST (5%)")
-            st.markdown("### TOTAL")
-        
+            st.write("Base Price:")
+            st.write(f"Discount ({pizza_discount}%):")
+            st.write("Price After Discount:")
+            st.write("GST (5%):")
+            st.markdown("**TOTAL TO PAY:**") # Bold text
+
         with c2:
             st.write(f"₹ {pizza_price}")
             st.write(f"- ₹ {discount_amount:.2f}")
+            st.write(f"₹ {final_price_without_tax:.2f}")
             st.write(f"+ ₹ {gst_amount:.2f}")
-            st.markdown(f"### ₹ {final_with_tax:.2f}")
-            
-        st.success("Thank you for visiting!")
+            st.markdown(f"**₹ {final_price_with_tax:.2f}**")
+        
         st.divider()
-
-        # 3. THE MAGIC PRINT BUTTON 🖨️
-        # We inject HTML/CSS/JS directly into the browser
-        
-        print_code = """
-        <script>
-            function printReceipt() {
-                window.print();
-            }
-        </script>
-        
-        <style>
-            /* This CSS only applies when PRINTING */
-            @media print {
-                /* Hide the Sidebar, Header, and Footer */
-                [data-testid="stSidebar"], 
-                header, 
-                footer, 
-                .stApp > header {
-                    display: none !important;
-                }
-                
-                /* Hide the Print Button itself on the paper */
-                .no-print {
-                    display: none !important;
-                }
-                
-                /* Make the font black for paper */
-                body {
-                    color: black !important;
-                }
-            }
-            
-            /* Button Style for the Website */
-            .print-btn {
-                background-color: #ff4b4b;
-                color: white;
-                padding: 10px 20px;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            .print-btn:hover {
-                background-color: #ff3333;
-            }
-        </style>
-        
-        <div style="text-align: center; margin-top: 20px;">
-            <button class="print-btn no-print" onclick="printReceipt()">
-                🖨️ Print Receipt Now
-            </button>
-        </div>
-        """
-        
-        # Render the HTML button
-        components.html(print_code, height=100)

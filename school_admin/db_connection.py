@@ -1,90 +1,137 @@
+import sqlite3
 from student import Student
 from teacher import Teacher
-from school import School
-from db_connection import SchoolDB
-import os
 
-def clear_screen() -> None:
-    os.system('cls' if os.name == 'nt' else 'clear')
+class SchoolDB:
+    def __init__(self, db_path: str = "school.db"):
+        self.conn = sqlite3.connect(db_path)
+        self.conn.row_factory = sqlite3.Row
+        
+        cur = self.conn.cursor()
+        
+        # Create Students Table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS students (
+                roll_no TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                age INTEGER,
+                grade TEXT,
+                address TEXT,
+                phone_number TEXT,
+                subjects TEXT,
+                attendance BOOLEAN DEFAULT 0
+            )
+        """)
 
-def display():
-    print("*"*50)
-    print("Press 1 for add the student.")
-    print("Press 2 for add the teacher.")
-    print("Press 3 for delete the student.")
-    print("Press 4 for delete the teacher.")
-    print("Press 5 get all students.")
-    print("Press 6 get all teachers.")
-    print("Press q for close the software.\n")
-    print("*"*50)
+        # Create Teachers Table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS teachers (
+                employee_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                age INTEGER,
+                address TEXT,
+                phone_number TEXT,
+                subjects TEXT,
+                classes TEXT,
+                attendance BOOLEAN DEFAULT 0
+            )
+        """)
+        self.conn.commit()
 
-schooldb = SchoolDB("school_database.db")
-school = School(schooldb)
+    def get_connection(self) -> sqlite3.Connection:
+        return self.conn
+    
+    def close_connection(self) -> None:
+        self.conn.close()
 
-def enter_user_details():
-    name = input("Name: ")
-    age = int(input("Age: "))
-    address = input("Address: ")
-    phone_number = input("Phone No.: ")
-    return {
-        "name": name,
-        "age": age,
-        "address": address,
-        "phone_number": phone_number,
-    }
-while True:
-    clear_screen()
-    display()
-    value = input("Enter your input: ").strip().lower()
-    match value:
-        case '1':
-            print("Enter the student's details:")
-            data = enter_user_details()
-            class_ = input("Class: ")
-            roll_no = input("Roll no: ")
-            subjects = input("Subjects (comma separated): ")
-            student = Student(data['name'], data['age'], data['address'], data['phone_number'], class_, roll_no, subjects)
-            school.add_student(student)
-            print(f"Added student {student.name} (roll {student.roll_no})")
-            input("Press Enter to continue...")
-        case '2':
-            print("Enter the teacher's details:")
-            data = enter_user_details()
-            employee_id = input("Employee ID: ")
-            subjects = input("Subjects (comma separated): ")
-            classes = input("Classes (comma separated): ")
-            teacher = Teacher(data['name'], data['age'], data['address'], data['phone_number'], employee_id, subjects, classes)
-            school.add_teacher(teacher)
-            print(f"Added teacher {teacher.name} (id {teacher.employee_id})")
-            input("Press Enter to continue...")
-        case '3':
-            roll_no = input("Roll no to delete: ")
-            removed = school.delete_student(roll_no)
-            if removed:
-                print(f"Deleted student with roll {roll_no}")
-            else:
-                print(f"No student found with roll {roll_no}")
-            input("Press Enter to continue...")
-        case '4':
-            employee_id = input("Employee id to delete: ")
-            removed = school.delete_teacher(employee_id)
-            if removed:
-                print(f"Deleted teacher with id {employee_id}")
-            else:
-                print(f"No teacher found with id {employee_id}")
-            input("Press Enter to continue...")
-        case '5':
-            print("Students:")
-            for s in school.get_all_students():
-                print(s)
-            input("Press Enter to continue...")
-        case '6':
-            print("Teachers:")
-            for t in school.get_all_teachers():
-                print(t)
-            input("Press Enter to continue...")
-        case 'q' | 'quit' | 'exit':
-            print("Exiting...")
-            break
-        case _:
-            print("Unrecognized option. Please try again.")
+    def insert_student(self, student: Student):
+        cur = self.conn.cursor()
+        
+        cur.execute(
+            """
+            INSERT OR REPLACE INTO students (roll_no, name, age, grade, address, phone_number, subjects, attendance)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                student.roll_no,
+                student.name,
+                student.age,
+                student.class_, 
+                student.address,
+                student.phone_number,
+                student.subjects,
+                getattr(student, "attendance", False),
+            ),
+        )
+        self.conn.commit()
+
+    def insert_teacher(self, teacher: Teacher) -> None:
+        cur = self.conn.cursor()
+        
+        cur.execute(
+            """
+            INSERT OR REPLACE INTO teachers (employee_id, name, age, address, phone_number, subjects, classes, attendance)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                teacher.employee_id,
+                teacher.name,
+                teacher.age,
+                teacher.address,
+                teacher.phone_number,
+                teacher.subjects,
+                teacher.classes,
+                getattr(teacher, "attendance", False),
+            ),
+        )
+        self.conn.commit()
+
+    def get_all_students(self):
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM students")
+        rows = cur.fetchall()
+        
+        result = [] 
+        for r in rows:
+            result.append({
+                "roll_no": r["roll_no"],
+                "name": r["name"],
+                "age": r["age"],
+                "class_": r["grade"],
+                "address": r["address"],
+                "phone_number": r["phone_number"],
+                "subjects": r["subjects"],
+                "attendance": bool(r["attendance"]),
+            })
+        return result
+
+    def get_all_teachers(self):
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM teachers")
+        rows = cur.fetchall()
+        
+        result = []
+        for r in rows:
+            result.append({
+                "employee_id": r["employee_id"],
+                "name": r["name"],
+                "age": r["age"],
+                "address": r["address"],
+                "phone_number": r["phone_number"],
+                "subjects": r["subjects"],
+                "classes": r["classes"],
+                "attendance": bool(r["attendance"]),
+            })
+        return result
+
+    def delete_student_db(self, roll_no) -> bool:
+        cur = self.conn.cursor()
+        cur.execute("DELETE FROM students WHERE roll_no = ?", (roll_no,))
+        self.conn.commit()
+        return cur.rowcount > 0
+
+    def delete_teacher_db(self, employee_id) -> bool:
+        cur = self.conn.cursor()
+        cur.execute("DELETE FROM teachers WHERE employee_id = ?", (employee_id,))
+        self.conn.commit()
+        return cur.rowcount > 0

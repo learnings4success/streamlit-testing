@@ -128,39 +128,18 @@ elif choice == "View Students":
     if students:
         student_data = []
         for s in students:
-            # FIX: Use Dot Notation (.) because 's' is an Object
-            # We use s.class_ (with underscore) assuming your Student class uses that to avoid conflict with Python keyword
             student_data.append({
-                "Name": s.name,
-                "Roll No": s.roll_no,
-                "Class": getattr(s, 'class_', s.grade), # Tries s.class_, if missing tries s.grade
-                "Phone": s.phone_number,
-                "Subjects": s.subjects
+                "Name": getattr(s, "name", "Unknown"),
+                "Roll No": getattr(s, "roll_no", "Unknown"),
+                
+                # FIX IS HERE: We use a string "N/A" as the backup, which never crashes.
+                # It tries to find 'class_', if that fails, it tries 'grade', if that fails, it says 'N/A'
+                "Class": getattr(s, "class_", getattr(s, "grade", "N/A")),
+                
+                "Phone": getattr(s, "phone_number", "Unknown"),
+                "Subjects": getattr(s, "subjects", "")
             })
         
         st.dataframe(student_data, use_container_width=True)
     else:
         st.info("No students found in database.")
-
-# === VIEW TEACHERS ===
-elif choice == "View Teachers":
-    st.header("👩‍🏫 All Teachers")
-    
-    teachers = school.get_all_teachers()
-    
-    if teachers:
-        teacher_data = []
-        for t in teachers:
-            # FIX: Use Dot Notation (.) because 't' is an Object
-            # FIX: Use .classes (matches your DB column) instead of .classes_assigned
-            teacher_data.append({
-                "Name": t.name,
-                "ID": t.employee_id,
-                "Phone": t.phone_number,
-                "Subjects": t.subjects,
-                "Classes": t.classes  # This is the correct attribute name
-            })
-            
-        st.dataframe(teacher_data, use_container_width=True)
-    else:
-        st.info("No teachers found in database.")

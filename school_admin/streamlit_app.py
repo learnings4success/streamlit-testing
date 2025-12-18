@@ -128,13 +128,14 @@ elif choice == "View Students":
     if students:
         student_data = []
         for s in students:
-            # FIX: Access using ['key'] because 's' is a Dictionary
+            # FIX: Use Dot Notation (.) because 's' is an Object
+            # We use s.class_ (with underscore) assuming your Student class uses that to avoid conflict with Python keyword
             student_data.append({
-                "Name": s['name'],
-                "Roll No": s['roll_no'],
-                "Class": s['class_'], 
-                "Phone": s['phone_number'],
-                "Subjects": s['subjects']
+                "Name": s.name,
+                "Roll No": s.roll_no,
+                "Class": getattr(s, 'class_', s.grade), # Tries s.class_, if missing tries s.grade
+                "Phone": s.phone_number,
+                "Subjects": s.subjects
             })
         
         st.dataframe(student_data, use_container_width=True)
@@ -150,13 +151,14 @@ elif choice == "View Teachers":
     if teachers:
         teacher_data = []
         for t in teachers:
-            # FIX: Access using ['key'] and use the correct key name 'classes'
+            # FIX: Use Dot Notation (.) because 't' is an Object
+            # FIX: Use .classes (matches your DB column) instead of .classes_assigned
             teacher_data.append({
-                "Name": t['name'],
-                "ID": t['employee_id'],
-                "Phone": t['phone_number'],
-                "Subjects": t['subjects'],
-                "Classes": t['classes']  # Fixed: changed from t.classes_assigned
+                "Name": t.name,
+                "ID": t.employee_id,
+                "Phone": t.phone_number,
+                "Subjects": t.subjects,
+                "Classes": t.classes  # This is the correct attribute name
             })
             
         st.dataframe(teacher_data, use_container_width=True)
